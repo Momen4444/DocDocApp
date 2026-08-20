@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/social_auth_row.dart';
 import '../widgets/phone_text_field.dart';
@@ -95,7 +96,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(result['message']),
-                        backgroundColor: result['success'] ? Colors.green : Colors.red,
+                        backgroundColor: result['success'] ? AppColors.success : AppColors.danger,
                       ),
                     );
 
@@ -121,5 +122,3 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 }
-
-

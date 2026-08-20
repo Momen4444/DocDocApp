@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
 /// The rounded, filled input used for Email / Password / etc. on both
 /// auth screens. One widget, reused with different params — this is
@@ -36,7 +37,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             ? IconButton(
                 icon: Icon(
                   _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  color: Colors.grey,
+                  color: AppColors.textGrey,
                   size: 20,
                 ),
                 onPressed: () => setState(() => _obscure = !_obscure),

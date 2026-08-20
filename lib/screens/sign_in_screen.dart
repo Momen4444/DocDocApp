@@ -117,7 +117,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(result['message']),
-                        backgroundColor: result['success'] ? Colors.green : Colors.red,
+                        backgroundColor: result['success'] ? AppColors.success : AppColors.danger,
                       ),
                     );
 
