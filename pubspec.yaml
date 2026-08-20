@@ -1,0 +1,35 @@
+name: docdoc_app
+description: Docdoc appointment app - login/onboarding UI.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_secure_storage: ^11.0.0
+  font_awesome_flutter: ^11.0.0
+  http: ^1.6.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Uncomment once you've exported real images from Figma into
+  # assets/images/ (Right-click a frame/layer in Figma > Export).
+  assets:
+    - assets/images/
+
+  # Uncomment once you've downloaded the real font's .ttf files into
+  # assets/fonts/ (check Figma's Inspect panel for the exact family).
+  # fonts:
+  #   - family: Inter
+  #     fonts:
+  #       - asset: assets/fonts/Inter-Regular.ttf
+  #       - asset: assets/fonts/Inter-Bold.ttf
+  #         weight: 700
