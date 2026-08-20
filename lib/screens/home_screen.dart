@@ -8,6 +8,8 @@ import '../widgets/home/home_error_state.dart';
 import '../widgets/home/home_header.dart';
 import '../widgets/home/home_nav_bar.dart';
 import '../widgets/home/home_search_bar.dart';
+import 'create_user_screen.dart';
+import 'user_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,12 +26,27 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _hasError = false;
   bool _isSearching = false;
   String _searchQuery = '';
+  
+  String _currentRole = 'User';
+  int _currentUserId = 0;
 
   // Lifecycle
   @override
   void initState() {
     super.initState();
+    _loadSession();
     _loadUsers();
+  }
+
+  Future<void> _loadSession() async {
+    final role = await LocalStorageService.getRole();
+    final userId = await LocalStorageService.getUserId();
+    if (mounted) {
+      setState(() {
+        _currentRole = role ?? 'User';
+        _currentUserId = userId ?? 0;
+      });
+    }
   }
 
   // Data fetching
@@ -101,9 +118,31 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) Navigator.pushReplacementNamed(context, '/sign-in');
   }
 
-  void _onNavTap(int index) {
+  void _onNavTap(int index) async {
     setState(() => _navIndex = index);
-    const wip = {1: 'Chat', 2: 'Search', 3: 'Appointments', 4: 'Profile'};
+    
+    if (index == 4 && _currentUserId != 0) {
+      // Profile Tab
+      final res = await ApiService.getUserById(_currentUserId);
+      if (res['success'] && mounted) {
+        final user = DoctorUser.fromJson(res['data']);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => UserDetailScreen(
+              user: user,
+              currentUserId: _currentUserId,
+              currentRole: _currentRole,
+            ),
+          ),
+        );
+      } else {
+        _snack('Could not load profile');
+      }
+      return;
+    }
+
+    const wip = {1: 'Chat', 2: 'Search', 3: 'Appointments'};
     if (wip.containsKey(index)) _snack('${wip[index]} — coming soon');
   }
 
@@ -152,6 +191,19 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       bottomNavigationBar:
           HomeNavBar(currentIndex: _navIndex, onTap: _onNavTap),
+      floatingActionButton: _currentRole == 'Admin'
+          ? FloatingActionButton(
+              onPressed: () async {
+                final didCreate = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CreateUserScreen()),
+                );
+                if (didCreate == true) _loadUsers();
+              },
+              backgroundColor: AppColors.primary,
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
     );
   }
 
@@ -221,7 +273,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return [
       SliverList(
         delegate: SliverChildBuilderDelegate(
-          (_, i) => UserCard(user: _users[i]),
+          (_, i) => UserCard(
+            user: _users[i],
+            currentRole: _currentRole,
+            currentUserId: _currentUserId,
+          ),
           childCount: _users.length,
         ),
       ),
