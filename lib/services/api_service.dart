@@ -7,11 +7,12 @@ import 'local_storage_service.dart';
 class ApiService {
   // You shall change pc IP depending on yours for the connection
   static const bool _physicalDevice = true;
-  static const String _pcLanIp = '192.168.1.8';
+  static const String _pcLanIp = '';
 
   static String get baseUrl {
     if (!kIsWeb && Platform.isAndroid) {
-      const host = _physicalDevice ? _pcLanIp : '10.0.2.2'; // return to emulator
+      const host =
+          _physicalDevice ? _pcLanIp : '10.0.2.2'; // return to emulator
       return 'http://$host:5099/api';
     }
     return 'http://localhost:5099/api';
@@ -134,9 +135,24 @@ class ApiService {
   static String _message(String body, String fallback) {
     try {
       final d = jsonDecode(body);
-      return (d is Map && d['message'] != null)
-          ? d['message'].toString()
-          : fallback;
+      if (d is Map) {
+        if (d['message'] != null) return d['message'].toString();
+
+        // Handle ASP.NET Model Validation Errors (400 Bad Request)
+        if (d['errors'] != null && d['errors'] is Map) {
+          final errors = d['errors'] as Map;
+          if (errors.isNotEmpty) {
+            final firstKey = errors.keys.first;
+            final firstErrorList = errors[firstKey];
+            if (firstErrorList is List && firstErrorList.isNotEmpty) {
+              return firstErrorList.first.toString();
+            }
+          }
+        }
+
+        if (d['title'] != null) return d['title'].toString();
+      }
+      return fallback;
     } catch (_) {
       return fallback;
     }
@@ -262,7 +278,8 @@ class ApiService {
   }
 
   /// POST /api/Users/{id}/image - upload profile image
-  static Future<Map<String, dynamic>> uploadProfileImage(int id, File file) async {
+  static Future<Map<String, dynamic>> uploadProfileImage(
+      int id, File file) async {
     final url = Uri.parse('$baseUrl/Users/$id/image');
     try {
       final request = http.MultipartRequest('POST', url);
@@ -270,17 +287,17 @@ class ApiService {
       if (token != null) {
         request.headers['Authorization'] = 'Bearer $token';
       }
-      
+
       request.files.add(
         await http.MultipartFile.fromPath(
           'file',
           file.path,
         ),
       );
-      
+
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
-      
+
       if (response.statusCode == 200) {
         return {'success': true, 'data': jsonDecode(response.body)};
       }
