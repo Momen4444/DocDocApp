@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import '../../models/doctor_user.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+
 import '../../widgets/loading_button.dart';
 import '../../widgets/user/role_dropdown.dart';
+import '../../widgets/user/user_avatar.dart';
 import '../../widgets/user/user_form_fields.dart';
 
 class EditUserScreen extends StatefulWidget {
@@ -28,6 +32,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
 
   String _selectedRole = 'User';
   bool _isLoading = false;
+  File? _pickedImage;
 
   @override
   void initState() {
@@ -46,6 +51,14 @@ class _EditUserScreenState extends State<EditUserScreen> {
     _ageCtrl.dispose();
     _phoneCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() => _pickedImage = File(picked.path));
+    }
   }
 
   Future<void> _save() async {
@@ -81,14 +94,20 @@ class _EditUserScreenState extends State<EditUserScreen> {
     };
 
     final res = await ApiService.updateUser(widget.user.id, body);
+    
+    bool imageSuccess = true;
+    if (res['success'] && _pickedImage != null) {
+      final imgRes = await ApiService.uploadProfileImage(widget.user.id, _pickedImage!);
+      imageSuccess = imgRes['success'];
+    }
 
     if (mounted) {
       setState(() => _isLoading = false);
       if (res['success']) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Profile updated successfully'),
-              backgroundColor: AppColors.success),
+          SnackBar(
+              content: Text(imageSuccess ? 'Profile updated successfully' : 'Profile updated, but failed to upload image'),
+              backgroundColor: imageSuccess ? AppColors.success : AppColors.warning),
         );
         Navigator.pop(context, true);
       } else {
@@ -115,8 +134,32 @@ class _EditUserScreenState extends State<EditUserScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            GestureDetector(
+              onTap: _pickImage,
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  if (_pickedImage != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(50),
+                      child: Image.file(_pickedImage!, width: 100, height: 100, fit: BoxFit.cover),
+                    )
+                  else
+                    UserAvatar(user: widget.user, size: 100),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
             UserFormFields(
               nameCtrl: _nameCtrl,
               emailCtrl: _emailCtrl,

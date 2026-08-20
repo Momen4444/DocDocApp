@@ -7,12 +7,11 @@ import 'local_storage_service.dart';
 class ApiService {
   // You shall change pc IP depending on yours for the connection
   static const bool _physicalDevice = true;
-  static const String _pcLanIp = '';
+  static const String _pcLanIp = '192.168.1.8';
 
   static String get baseUrl {
     if (!kIsWeb && Platform.isAndroid) {
-      const host =
-          _physicalDevice ? _pcLanIp : '10.0.2.2'; // return to emulator
+      const host = _physicalDevice ? _pcLanIp : '10.0.2.2'; // return to emulator
       return 'http://$host:5099/api';
     }
     return 'http://localhost:5099/api';
@@ -262,12 +261,43 @@ class ApiService {
     }
   }
 
-  /// Builds the full URL for a user's profile image served by ASP.NET static files.
+  /// POST /api/Users/{id}/image - upload profile image
+  static Future<Map<String, dynamic>> uploadProfileImage(int id, File file) async {
+    final url = Uri.parse('$baseUrl/Users/$id/image');
+    try {
+      final request = http.MultipartRequest('POST', url);
+      final token = await LocalStorageService.getToken();
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          file.path,
+        ),
+      );
+      
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': jsonDecode(response.body)};
+      }
+      return {
+        'success': false,
+        'message': _message(response.body, 'Failed to upload image.')
+      };
+    } catch (_) {
+      return {'success': false, 'message': 'Network error. Please try again.'};
+    }
+  }
+
   static String buildImageUrl(String? profileImagePath) {
     if (profileImagePath == null || profileImagePath.isEmpty) return '';
-    final base = (!kIsWeb && Platform.isAndroid)
-        ? 'http://10.0.2.2:5099'
-        : 'http://localhost:5099';
+    // baseUrl is http://host:5099/api
+    // we want http://host:5099/images/users/
+    final base = baseUrl.replaceAll('/api', '');
     return '$base/images/users/$profileImagePath';
   }
 }

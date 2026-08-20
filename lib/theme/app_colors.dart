@@ -26,6 +26,7 @@ class AppColors {
   // ── Status / Alerts ──────────────────────────────────────────
   static const Color danger  = Color(0xFFFF3B30); // notification dot, errors
   static const Color success = Color(0xFF43A047); // snackbar success
+  static const Color warning = Color(0xFFF57C00); // snackbar warning
 
   // ── Role badge ───────────────────────────────────────────────
   static const Color roleAdminText = Color(0xFF2F6FED); // = primary
